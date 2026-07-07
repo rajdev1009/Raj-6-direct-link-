@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>{{.FileName}} — RAJ Stream</title>
+
+<meta property="og:title" content="{{.FileName}}">
+<meta property="og:type" content="video.other">
+<meta property="og:video" content="{{.StreamURL}}">
+<meta property="og:description" content="Watch {{.FileName}} — streamed via RAJ File Stream Bot">
+<meta name="twitter:card" content="player">
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+<style>
+  :root {
+    --bg-primary: #0b0d13;
+    --bg-secondary: #161923;
+    --bg-tertiary: #20242f;
+    --bg-glass: rgba(32, 36, 47, 0.85);
+    --text-primary: #ffffff;
+    --text-secondary: #a8b3cf;
+    --text-muted: #6b7395;
+    --accent-primary: #7aa2f7;
+    --accent-secondary: #9d7cf7;
+    --accent-gradient: linear-gradient(135deg, #7aa2f7 0%, #9d7cf7 100%);
+    --rgb-gradient: linear-gradient(90deg, #ff2d6a, #ff9d2d, #f4ff2d, #2dff8f, #2dd4ff, #8f2dff, #ff2d6a);
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --border: rgba(255, 255, 255, 0.07);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.35);
+    --shadow-lg: 0 12px 40px rgba(0,0,0,0.5);
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 22px;
+  }
+  body.light {
+    --bg-primary: #f4f5f9;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #eef0f6;
+    --bg-glass: rgba(255,255,255,0.9);
+    --text-primary: #14161f;
+    --text-secondary: #4b5270;
+    --text-muted: #8890a6;
+    --border: rgba(0,0,0,0.08);
+  }
+  body.trueDark {
+    --bg-primary: #000000;
+    --bg-secondary: #0a0a0a;
+    --bg-tertiary: #141414;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { overflow-x:hidden; }
+  body {
+    font-family:'Inter',sans-serif;
+    background:var(--bg-primary);
+    color:var(--text-primary);
+    min-height:100vh;
+    width:100%;
+    overflow-x:hidden;
+    transition: background 0.25s ease, color 0.25s ease;
+  }
+
+  @keyframes rgbMove { 0%{background-position:0% 50%} 100%{background-position:300% 50%} }
+  .rgb-text {
+    background: var(--rgb-gradient);
+    background-size:300% auto;
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation: rgbMove 4s linear infinite;
+    font-weight:800;
+  }
+
+  /* ---------- Loading overlay ---------- */
+  .loading-overlay {
+    position:fixed; inset:0; z-index:9999;
+    background:var(--bg-primary);
+    display:flex; align-items:center; justify-content:center;
+    transition:opacity 0.3s ease;
+  }
+  .loading-overlay.hidden { opacity:0; pointer-events:none; }
+  .loader {
+    width:44px; height:44px; border-radius:50%;
+    border:3px solid rgba(255,255,255,0.15);
+    border-top-color: var(--accent-primary);
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform:rotate(360deg);} }
+
+  .bg-decoration {
+    position:fixed; inset:0; z-index:0; opacity:0.5; pointer-events:none;
+    background: radial-gradient(circle at 20% 30%, rgba(122,162,247,0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(157,124,247,0.06) 0%, transparent 50%);
+  }
+
+  .app-wrapper { position:relative; z-index:1; min-height:100vh; display:flex; flex-direction:column; }
+
+  /* ---------- Header ---------- */
+  header {
+    background: var(--bg-glass);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding:14px 4%;
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    position:sticky; top:0; z-index:1000;
+    border-bottom:1px solid var(--border);
+    box-shadow: var(--shadow-md);
+  }
+  .logo-wrapper { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+  .logo {
+    display:flex; align-items:center; gap:10px;
+    font-family:'Space Grotesk',sans-serif; font-size:20px; font-weight:700;
+    background: var(--accent-gradient); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    white-space:nowrap;
+  }
+  .logo-icon {
+    width:38px; height:38px; border-radius:11px;
+    background: var(--accent-gradient);
+    display:flex; align-items:center; justify-content:center;
+    font-size:17px; color:#fff; flex-shrink:0;
+    box-shadow:0 4px 12px rgba(122,162,247,0.35);
+    overflow:hidden;
+    border:2px solid var(--accent-primary);
+    padding:0;
+  }
+  .logo-icon img {
+    width:100%; height:100%; object-fit:cover; display:block; border-radius:9px;
+  }
+  .live-badge {
+    background:var(--danger); color:#fff; padding:4px 11px; border-radius:20px;
+    font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;
+    display:flex; align-items:center; gap:6px; white-space:nowrap; flex-shrink:0;
+    animation:pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.7} }
+  .live-badge::before { content:''; width:6px; height:6px; background:#fff; border-radius:50%; animation:blink 1s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  #file-name { flex:1; margin:0 10px; overflow:hidden; min-width:0; }
+  #file-name marquee { color:var(--text-secondary); font-weight:500; font-size:14px; }
+
+  .theme-switcher {
+    display:flex; background:var(--bg-tertiary); border-radius:50px; padding:4px; gap:4px; border:1px solid var(--border);
+    flex-shrink:0;
+  }
+  .theme-btn {
+    width:32px; height:32px; border:none; background:transparent; border-radius:50%;
+    cursor:pointer; font-size:14px; color:var(--text-muted);
+    display:flex; align-items:center; justify-content:center; transition:all 0.2s ease;
+  }
+  .theme-btn.active { background:var(--accent-gradient); color:#fff; box-shadow:0 2px 8px rgba(122,162,247,0.35); }
+
+  .header-actions { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+
+  .projects-menu-wrap { position:relative; flex-shrink:0; }
+  .projects-btn {
+    width:36px; height:36px; border-radius:50%; border:1px solid var(--border);
+    background:var(--bg-tertiary); color:var(--text-secondary); cursor:pointer;
+    display:flex; align-items:center; justify-content:center; font-size:16px;
+  }
+  .projects-btn:hover { color:var(--text-primary); }
+  .projects-dropdown {
+    position:absolute; top:calc(100% + 10px); right:0;
+    width:280px; max-width:80vw;
+    background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-lg); padding:8px; z-index:2500;
+    opacity:0; transform:translateY(-8px); pointer-events:none; transition:all 0.18s ease;
+  }
+  .projects-dropdown.open { opacity:1; transform:translateY(0); pointer-events:auto; }
+  .projects-dropdown-title {
+    font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--text-muted);
+    padding:8px 10px 4px;
+  }
+  .project-item {
+    display:flex; gap:10px; align-items:flex-start; padding:10px; border-radius:10px;
+    text-decoration:none; color:var(--text-primary);
+  }
+  .project-item:hover { background:var(--bg-tertiary); }
+  .project-icon {
+    width:36px; height:36px; border-radius:10px; background:var(--accent-gradient);
+    display:flex; align-items:center; justify-content:center; color:#fff; font-size:15px; flex-shrink:0;
+  }
+  .project-name { font-size:13px; font-weight:700; margin-bottom:2px; }
+  .project-desc { font-size:11px; color:var(--text-secondary); line-height:1.4; }
+
+  /* ---------- Main grid ---------- */
+  .main-container {
+    flex:1; padding:24px 4%; max-width:1500px; margin:0 auto; width:100%;
+    display:grid; grid-template-columns:1fr 320px; gap:20px; align-items:start;
+  }
+  .player-wrapper { min-width:0; }
+  .player-container {
+    background:var(--bg-secondary); border-radius:var(--radius-xl);
+    overflow:hidden; box-shadow:var(--shadow-lg); border:1px solid var(--border);
+  }
+  .video-wrap { position:relative; width:100%; background:#000; line-height:0; }
+  .player { width:100%; max-height:70vh; display:block; background:#000; }
+
+  /* Loading spinner overlay */
+  .loader {
+    position:absolute; inset:0; z-index:5;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(0,0,0,0.55);
+    transition:opacity 0.25s ease; pointer-events:none;
+  }
+  .loader.hidden { opacity:0; }
+  .spinner {
+    width:42px; height:42px; border-radius:50%;
+    border:3px solid rgba(255,255,255,0.15); border-top-color:var(--accent-primary);
+    animation:spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  /* Mini toolbar under the video (speed / PiP / size-duration) */
+  .toolbar {
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    padding:10px 16px; font-size:12.5px; color:var(--text-muted);
+    border-bottom:1px solid var(--border);
+  }
+  .toolbar .left { display:flex; gap:6px; }
+  .chip {
+    background:var(--bg-tertiary); color:var(--text-primary);
+    border:1px solid var(--border); border-radius:999px;
+    padding:6px 12px; font-size:12.5px; font-weight:600; cursor:pointer; user-select:none;
+  }
+  .chip:active { transform:scale(0.95); }
+
+  /* VPN / secure note */
+  .vpn-note {
+    display:flex; align-items:center; gap:10px;
+    background:rgba(122,162,247,0.08); border:1px solid rgba(122,162,247,0.25);
+    border-radius:12px; padding:11px 12px; margin-bottom:16px;
+  }
+  .vpn-note-text { flex:1; font-size:11.5px; line-height:1.5; color:var(--text-secondary); }
+  .vpn-translate-btn {
+    flex-shrink:0; display:flex; align-items:center; gap:5px;
+    background:var(--bg-tertiary); border:1px solid var(--border); color:var(--text-primary);
+    border-radius:8px; padding:7px 10px; font-size:11px; font-weight:700; cursor:pointer;
+  }
+
+  .video-info { padding:20px; }
+  .video-header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:14px; }
+  .video-title { font-size:17px; font-weight:700; line-height:1.4; word-break:break-word; }
+
+  .bookmark-btn {
+    width:38px; height:38px; border-radius:10px; border:1px solid var(--border);
+    background:var(--bg-tertiary); color:var(--text-secondary); cursor:pointer; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; position:relative;
+  }
+  .bookmark-btn .check-icon { display:none; color:var(--success); }
+  .bookmark-btn.bookmarked .bookmark-icon { display:none; }
+  .bookmark-btn.bookmarked .check-icon { display:block; }
+
+  .video-stats { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
+
+  .audio-track-wrap { position:relative; display:none; margin-bottom:14px; }
+  .audio-track-btn {
+    display:flex; align-items:center; gap:8px;
+    background:var(--bg-tertiary); color:var(--text-primary);
+    border:1px solid var(--border); border-radius:10px;
+    padding:9px 12px; font-size:12.5px; font-weight:600; cursor:pointer;
+  }
+  .audio-track-btn i:first-child { color:var(--accent-primary); }
+  .audio-track-dropdown {
+    position:absolute; top:calc(100% + 6px); left:0; min-width:180px;
+    background:var(--bg-secondary); border:1px solid var(--border); border-radius:12px;
+    box-shadow:var(--shadow-lg); padding:6px; z-index:2200;
+    opacity:0; transform:translateY(-6px); pointer-events:none; transition:all 0.15s ease;
+  }
+  .audio-track-dropdown.open { opacity:1; transform:translateY(0); pointer-events:auto; }
+  .audio-track-item {
+    display:block; width:100%; text-align:left; background:none; border:none;
+    color:var(--text-secondary); font-size:12.5px; padding:9px 10px; border-radius:8px; cursor:pointer;
+  }
+  .audio-track-item:hover { background:var(--bg-tertiary); color:var(--text-primary); }
+  .audio-track-item.active { color:var(--accent-primary); font-weight:700; }
+  .audio-track-item.active::before { content:'✓ '; }
+  .stat-item {
+    display:flex; align-items:center; gap:6px; background:var(--bg-tertiary);
+    padding:7px 10px; border-radius:8px; font-size:11.5px; color:var(--text-secondary); border:1px solid var(--border);
+  }
+  .stat-item.quality { color:var(--warning); }
+
+  .action-buttons { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:20px; }
+  .action-btn {
+    display:flex; flex-direction:column; align-items:center; gap:6px;
+    padding:13px 8px; border-radius:var(--radius-md); border:1px solid var(--border);
+    background:var(--bg-tertiary); color:var(--text-secondary); text-decoration:none;
+    cursor:pointer; font-size:11.5px; font-weight:600; transition:transform 0.15s ease, opacity 0.15s ease;
+    position:relative;
+  }
+  .action-btn:active { transform:scale(0.95); }
+  .action-btn i { font-size:16px; }
+  .action-btn.btn-primary { background:var(--accent-gradient); color:#fff; border:none; }
+  .action-btn.btn-playit { background:linear-gradient(120deg,#8f2dff,#ff2d6a); color:#fff; border:none; }
+  .action-btn.btn-vlc { background:linear-gradient(120deg,#ff9d2d,#ff5e2d); color:#0a0b10; border:none; }
+  .watchlist-count {
+    position:absolute; top:-5px; right:-5px; background:var(--danger); color:#fff;
+    font-size:9px; padding:1px 5px; border-radius:20px; font-weight:700;
+  }
+
+  .share-section { border-top:1px solid var(--border); padding-top:16px; }
+  .share-title { display:flex; align-items:center; gap:8px; font-size:13px; font-weight:700; color:var(--text-secondary); margin-bottom:12px; }
+  .share-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+  .share-btn {
+    display:flex; flex-direction:column; align-items:center; gap:5px;
+    padding:10px 4px; border-radius:10px; text-decoration:none; color:#fff;
+    font-size:10.5px; font-weight:600; cursor:pointer; border:none;
+  }
+  .share-btn i { font-size:15px; }
+  .btn-copy { background:var(--bg-tertiary); color:var(--text-secondary); border:1px solid var(--border) !important; }
+  .btn-whatsapp { background:#25d366; }
+  .btn-telegram { background:#0088cc; }
+  .btn-facebook { background:#1877f2; }
+  .btn-twitter { background:#1da1f2; }
+  .btn-instagram { background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888); }
+  .btn-messenger { background:#0084ff; }
+  .btn-email { background:#6b7280; }
+
+  /* ---------- Sidebar ---------- */
+  .sidebar { display:flex; flex-direction:column; gap:16px; }
+  .sidebar-card {
+    background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-lg);
+    padding:18px; box-shadow:var(--shadow-md);
+  }
+  .sidebar-title { display:flex; align-items:center; gap:8px; font-size:13px; font-weight:700; margin-bottom:14px; color:var(--text-primary); }
+  .stats-grid { display:flex; flex-direction:column; gap:10px; }
+  .stat-card { display:flex; align-items:center; justify-content:space-between; padding:10px 12px; background:var(--bg-tertiary); border-radius:10px; }
+  .stat-label { font-size:12px; color:var(--text-muted); }
+  .stat-value { font-size:13px; font-weight:700; }
+  .quality-badge { display:flex; align-items:center; gap:5px; color:var(--warning); }
+
+  .credit-card { text-align:center; }
+  .credit-name { font-size:20px; margin:8px 0 2px; }
+  .credit-sub { font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; }
+
+  /* ---------- Watchlist modal ---------- */
+  .watchlist-modal {
+    position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:2000;
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; pointer-events:none; transition:opacity 0.2s ease; padding:16px;
+  }
+  .watchlist-modal.active { opacity:1; pointer-events:auto; }
+  .watchlist-container {
+    background:var(--bg-secondary); border-radius:var(--radius-lg); width:100%; max-width:460px;
+    max-height:80vh; display:flex; flex-direction:column; border:1px solid var(--border); box-shadow:var(--shadow-lg);
+  }
+  .watchlist-header { display:flex; align-items:center; justify-content:space-between; padding:16px 18px; border-bottom:1px solid var(--border); }
+  .watchlist-title { display:flex; align-items:center; gap:8px; font-weight:700; }
+  .close-watchlist { background:none; border:none; color:var(--text-muted); font-size:18px; cursor:pointer; }
+  .watchlist-content { padding:14px 18px; overflow-y:auto; flex:1; }
+  .watchlist-empty { text-align:center; padding:30px 10px; color:var(--text-muted); }
+  .watchlist-empty i { font-size:34px; margin-bottom:10px; display:block; }
+  .watchlist-item { display:flex; align-items:center; gap:10px; padding:10px; border-radius:10px; background:var(--bg-tertiary); margin-bottom:8px; }
+  .watchlist-item-icon { width:34px; height:34px; border-radius:8px; background:var(--accent-gradient); display:flex; align-items:center; justify-content:center; color:#fff; flex-shrink:0; }
+  .watchlist-item-info { flex:1; min-width:0; }
+  .watchlist-item-name { font-size:12.5px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .watchlist-item-date { font-size:10.5px; color:var(--text-muted); display:flex; align-items:center; gap:4px; margin-top:2px; }
+  .watchlist-item-actions { display:flex; gap:6px; }
+  .watchlist-action-btn { width:28px; height:28px; border-radius:7px; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; text-decoration:none; color:#fff; }
+  .btn-play { background:var(--success); }
+  .btn-remove { background:var(--danger); }
+  .watchlist-footer { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-top:1px solid var(--border); }
+  .watchlist-stats { font-size:11.5px; color:var(--text-muted); }
+  .clear-watchlist { background:none; border:1px solid var(--danger); color:var(--danger); padding:6px 12px; border-radius:8px; font-size:11.5px; cursor:pointer; }
+
+  /* ---------- Footer ---------- */
+  footer { padding:36px 4% 20px; border-top:1px solid var(--border); margin-top:20px; }
+  .footer-content { max-width:1500px; margin:0 auto; }
+  .footer-logo { font-family:'Space Grotesk',sans-serif; font-size:20px; font-weight:700; background:var(--accent-gradient); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:8px; }
+  .footer-description { font-size:12.5px; color:var(--text-secondary); max-width:480px; line-height:1.6; margin-bottom:14px; }
+  .social-links { display:flex; gap:10px; margin-top:14px; }
+  .social-link { width:34px; height:34px; border-radius:9px; background:var(--bg-tertiary); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; color:var(--text-secondary); text-decoration:none; }
+  .social-link.telegram-link {
+    width:auto; gap:7px; padding:0 12px; color:#29a9eb; border-color:rgba(41,169,235,0.3);
+    font-size:12.5px; font-weight:600;
+  }
+  .footer-bottom { margin-top:24px; padding-top:16px; border-top:1px solid var(--border); text-align:center; }
+  .footer-copyright { font-size:11.5px; color:var(--text-muted); }
+  .footer-copyright a { color:var(--accent-primary); text-decoration:none; }
+
+  /* ---------- Toast ---------- */
+  .toast {
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--bg-secondary); border:1px solid var(--border); box-shadow:var(--shadow-lg);
+    padding:12px 16px; border-radius:12px; display:flex; align-items:center; gap:10px;
+    opacity:0; pointer-events:none; transition:all 0.2s ease; z-index:5000; max-width:90vw;
+  }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+  .toast i { font-size:18px; color:var(--success); }
+  .toast.warning i { color:var(--warning); }
+  .toast.error i { color:var(--danger); }
+  .toast-title { font-size:13px; font-weight:700; }
+  .toast-message { font-size:11.5px; color:var(--text-muted); }
+
+  @media (max-width:900px) {
+    .main-container { grid-template-columns:1fr; }
+  }
+  @media (max-width:480px) {
+    .action-buttons { grid-template-columns:repeat(2,1fr); }
+    .share-grid { grid-template-columns:repeat(3,1fr); }
+    .logo span { display:none; }
+  }
+</style>
+</head>
+<body oncontextmenu="return false" onselectstart="return false">
+  <div class="loading-overlay" id="loadingOverlay"><div class="loader"></div></div>
+  <div class="bg-decoration"></div>
+
+  <div class="app-wrapper">
+    <header>
+      <div class="logo-wrapper">
+        <div class="logo">
+          <div class="logo-icon"><img src="https://i.ibb.co/sdkz46tk/1782055936163-2.jpg" alt="RAJ logo"></div>
+          <span>RAJ Stream</span>
+        </div>
+        <div class="live-badge"><span>Live</span></div>
+      </div>
+
+      <div id="file-name"><marquee direction="left">{{.FileName}}</marquee></div>
+
+      <div class="header-actions">
+        <div class="theme-switcher">
+          <button class="theme-btn active" data-theme="default" title="Default">🌈</button>
+          <button class="theme-btn" data-theme="trueDark" title="True Dark">🌙</button>
+          <button class="theme-btn" data-theme="light" title="Light">☀️</button>
+        </div>
+
+        <div class="projects-menu-wrap">
+          <button class="projects-btn" id="projectsBtn" title="My Projects">
+            <i class="fas fa-ellipsis-vertical"></i>
+          </button>
+          <div class="projects-dropdown" id="projectsDropdown">
+            <div class="projects-dropdown-title">My Projects</div>
+            <a class="project-item" href="https://teacher-ai-studio.onrender.com/" target="_blank" rel="noopener">
+              <div class="project-icon"><i class="fas fa-robot"></i></div>
+              <div>
+                <div class="project-name">RAJ AI</div>
+                <div class="project-desc">Bahut hi advance AI — iska behaviour dekh kar aap fida ho jaaoge!</div>
+              </div>
+            </a>
+            <a class="project-item" href="https://rajdev1009.github.io/page-for-Instagram-followers/?utm_source=ig&amp;utm_medium=social&amp;utm_content=link_in_bio&amp;fbclid=PAZXh0bgNhZW0CMTEAc3J0YwZhcHBfaWQPNTY3MDY3MzQzMzUyNDI3AAGnh6EL0oupu6ObPjJh8x9pUTE7EdQbqT9oAELt8rR30MrnVykOJ14Y3AZjOFw_aem_AtoBlh_Vfv9XBuFktxkfqQ" target="_blank" rel="noopener">
+              <div class="project-icon"><i class="fas fa-compass"></i></div>
+              <div>
+                <div class="project-name">Explore & Follow</div>
+                <div class="project-desc">Gaane suno, mera project dekho — pehle Instagram follow karo, phir explore karo!</div>
+              </div>
+            </a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="main-container">
+      <div class="player-wrapper">
+        <div class="player-container">
+          <div class="video-wrap">
+            <div class="loader" id="loader"><div class="spinner"></div></div>
+            <video id="player" class="player" controls autoplay playsinline preload="metadata">
+              <source src="{{.StreamURL}}" type="{{.MimeType}}">
+              Your browser does not support the video tag.
+            </video>
+          </div>
+
+          <div class="toolbar">
+            <div class="left">
+              <button class="chip" id="btnSpeed">1x</button>
+              <button class="chip" id="btnPiP">PiP</button>
+            </div>
+            <div id="metaInfo">{{.FileSize}}</div>
+          </div>
+
+          <div class="video-info">
+            <div class="vpn-note" id="vpnNote">
+              <div class="vpn-note-text" id="vpnNoteText">🔒 For smoother streaming, try connecting a VPN (like Proton VPN, Turbo VPN, etc.) to a nearby server such as Singapore — you'll usually get better speed. This link itself is fully secure (HTTPS encrypted).</div>
+              <button class="vpn-translate-btn" id="vpnTranslateBtn" title="Translate"><i class="fas fa-language"></i> <span id="vpnLangLabel">EN</span></button>
+            </div>
+
+            <div class="video-header">
+              <h1 class="video-title">{{.FileName}}</h1>
+              <button class="bookmark-btn" id="bookmarkBtn" title="Add to Watchlist">
+                <i class="far fa-bookmark bookmark-icon"></i>
+                <i class="fas fa-check check-icon"></i>
+              </button>
+            </div>
+
+            <div class="audio-track-wrap" id="audioTrackWrap">
+              <button class="audio-track-btn" id="audioTrackBtn">
+                <i class="fas fa-volume-high"></i>
+                <span id="audioTrackLabel">Audio</span>
+                <i class="fas fa-caret-down"></i>
+              </button>
+              <div class="audio-track-dropdown" id="audioTrackDropdown"></div>
+            </div>
+
+            <div class="video-stats">
+              <div class="stat-item"><i class="fas fa-signal"></i><span>Streaming</span></div>
+              <div class="stat-item"><i class="fas fa-database"></i><span>{{.FileSize}}</span></div>
+              <div class="stat-item quality" id="statQuality"><i class="fas fa-crown"></i><span>HD</span></div>
+              <div class="stat-item"><i class="fas fa-shield-alt"></i><span>Secure</span></div>
+            </div>
+
+            <div class="action-buttons">
+              <button class="action-btn" onclick="openWatchlist()">
+                <i class="fas fa-list"></i><span>Watchlist</span>
+                <span class="watchlist-count" id="watchlistCount" style="display:none;">0</span>
+              </button>
+              <button class="action-btn btn-primary" onclick="copyLink()">
+                <i class="fas fa-link"></i><span>Copy Link</span>
+              </button>
+              <a class="action-btn btn-playit" href="{{.PlayItURL}}">
+                <i class="fas fa-mobile-screen-button"></i><span>PlayIt</span>
+              </a>
+              <a class="action-btn btn-vlc" href="{{.VlcURL}}">
+                <i class="fas fa-clapperboard"></i><span>VLC</span>
+              </a>
+              <a class="action-btn" href="{{.DownloadURL}}">
+                <i class="fas fa-download"></i><span>Download</span>
+              </a>
+              <button class="action-btn" onclick="shareVideo()">
+                <i class="fas fa-share-nodes"></i><span>Share</span>
+              </button>
+            </div>
+
+            <div class="share-section">
+              <div class="share-title"><i class="fas fa-share-alt"></i>Share on Social</div>
+              <div class="share-grid">
+                <button class="share-btn btn-copy" onclick="copyLink()"><i class="fas fa-link"></i><span>Copy</span></button>
+                <a class="share-btn btn-whatsapp" id="whatsapp-share" target="_blank"><i class="fab fa-whatsapp"></i><span>WhatsApp</span></a>
+                <a class="share-btn btn-telegram" id="telegram-share" target="_blank"><i class="fab fa-telegram"></i><span>Telegram</span></a>
+                <a class="share-btn btn-facebook" id="facebook-share" target="_blank"><i class="fab fa-facebook-f"></i><span>Facebook</span></a>
+                <a class="share-btn btn-twitter" id="twitter-share" target="_blank"><i class="fab fa-twitter"></i><span>Twitter</span></a>
+                <button class="share-btn btn-instagram" onclick="shareToInstagram()"><i class="fab fa-instagram"></i><span>Instagram</span></button>
+                <a class="share-btn btn-messenger" id="messenger-share"><i class="fab fa-facebook-messenger"></i><span>Messenger</span></a>
+                <a class="share-btn btn-email" id="email-share"><i class="fas fa-envelope"></i><span>Email</span></a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="sidebar">
+        <div class="sidebar-card">
+          <div class="sidebar-title"><i class="fas fa-chart-line"></i>Stream Stats</div>
+          <div class="stats-grid">
+            <div class="stat-card"><div class="stat-label">Quality</div><div class="stat-value quality-badge" id="qualityBadge"><i class="fas fa-film"></i> HD</div></div>
+            <div class="stat-card"><div class="stat-label">Status</div><div class="stat-value" style="color:var(--success);">Active</div></div>
+            <div class="stat-card"><div class="stat-label">File Size</div><div class="stat-value">{{.FileSize}}</div></div>
+            <div class="stat-card"><div class="stat-label">Server</div><div class="stat-value">RAJ Engine</div></div>
+          </div>
+        </div>
+
+        <div class="sidebar-card">
+          <div class="sidebar-title"><i class="fas fa-info-circle"></i>Information</div>
+          <div style="color:var(--text-secondary); font-size:12px; line-height:1.7;">
+            <p style="margin-bottom:8px;">🚀 <strong>Fast Streaming:</strong> Direct Telegram-powered CDN.</p>
+            <p style="margin-bottom:8px;">🔒 <strong>Secure:</strong> Permanent encrypted stream link.</p>
+            <p>⚡ <strong>Any Size:</strong> Works up to 4GB files.</p>
+          </div>
+        </div>
+
+        <div class="sidebar-card credit-card">
+          <div class="rgb-text credit-name">Raj Dev</div>
+          <div class="credit-sub">⚡ RAJ File Stream Bot</div>
+        </div>
+      </aside>
+    </div>
+
+    <div class="watchlist-modal" id="watchlistModal">
+      <div class="watchlist-container">
+        <div class="watchlist-header">
+          <div class="watchlist-title"><i class="fas fa-list"></i>My Watchlist</div>
+          <button class="close-watchlist" onclick="closeWatchlist()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="watchlist-content" id="watchlistContent"></div>
+        <div class="watchlist-footer">
+          <div class="watchlist-stats" id="watchlistStats">0 items in watchlist</div>
+          <button class="clear-watchlist" onclick="clearWatchlist()" id="clearWatchlistBtn" style="display:none;">Clear All</button>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <div class="footer-content">
+        <div class="footer-logo">RAJ File Stream</div>
+        <p class="footer-description">
+          Direct, permanent Telegram file streaming — any size, any format. Built for speed and simplicity.
+        </p>
+        <div class="social-links">
+          <a href="#" class="social-link" title="GitHub"><i class="fa-brands fa-github"></i></a>
+          <a href="https://t.me/raj_dev_01" class="social-link telegram-link" target="_blank" rel="noopener" title="Telegram">
+            <i class="fa-brands fa-telegram"></i><span>@raj_dev_01</span>
+          </a>
+        </div>
+        <div class="footer-bottom">
+          <div class="footer-copyright">
+            © 2026 Made with <i class="fas fa-heart" style="color:#ef4444"></i> by <span class="rgb-text">Raj Dev</span> — <span style="color:var(--text-muted)">AstraToonix Stream Engine</span>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <div class="toast" id="toast">
+    <i class="fas fa-check-circle"></i>
+    <div class="toast-content">
+      <div class="toast-title">Success!</div>
+      <div class="toast-message">Link copied to clipboard</div>
+    </div>
+  </div>
+
+  <script>
+    // ---------- Watchlist (localStorage) ----------
+    class WatchlistManager {
+      constructor() { this.key = 'raj-stream-watchlist'; this.items = this.load(); this.updateCount(); }
+      load() { const s = localStorage.getItem(this.key); return s ? JSON.parse(s) : []; }
+      save() { localStorage.setItem(this.key, JSON.stringify(this.items)); this.updateCount(); }
+      add(item) {
+        if (!this.items.find(i => i.url === item.url)) {
+          this.items.unshift({ ...item, id: Date.now(), addedAt: new Date().toISOString() });
+          this.save(); return true;
+        }
+        return false;
+      }
+      remove(id) { this.items = this.items.filter(i => i.id !== id); this.save(); }
+      clear() { this.items = []; this.save(); }
+      getAll() { return this.items; }
+      isInWatchlist(url) { return this.items.some(i => i.url === url); }
+      updateCount() {
+        const el = document.getElementById('watchlistCount');
+        if (!el) return;
+        if (this.items.length > 0) { el.style.display = 'block'; el.textContent = this.items.length; }
+        else { el.style.display = 'none'; }
+      }
+    }
+    const watchlistManager = new WatchlistManager();
+
+    function openWatchlist() {
+      document.getElementById('watchlistModal').classList.add('active');
+      renderWatchlist();
+      document.body.style.overflow = 'hidden';
+    }
+    function closeWatchlist() {
+      document.getElementById('watchlistModal').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+    function formatDate(dateString) {
+      const diffMs = new Date() - new Date(dateString);
+      const mins = Math.floor(diffMs/60000), hrs = Math.floor(diffMs/3600000), days = Math.floor(diffMs/86400000);
+      if (mins < 1) return 'just now';
+      if (mins < 60) return mins + ' min' + (mins>1?'s':'') + ' ago';
+      if (hrs < 24) return hrs + ' hour' + (hrs>1?'s':'') + ' ago';
+      if (days < 7) return days + ' day' + (days>1?'s':'') + ' ago';
+      return new Date(dateString).toLocaleDateString();
+    }
+    function renderWatchlist() {
+      const content = document.getElementById('watchlistContent');
+      const stats = document.getElementById('watchlistStats');
+      const clearBtn = document.getElementById('clearWatchlistBtn');
+      const items = watchlistManager.getAll();
+      if (items.length === 0) {
+        content.innerHTML = '<div class="watchlist-empty"><i class="fas fa-inbox"></i><h3>Your watchlist is empty</h3><p>Videos you bookmark will appear here</p></div>';
+        clearBtn.style.display = 'none';
+      } else {
+        content.innerHTML = items.map(item => `
+          <div class="watchlist-item">
+            <div class="watchlist-item-icon"><i class="fas fa-play"></i></div>
+            <div class="watchlist-item-info">
+              <div class="watchlist-item-name">${item.name}</div>
+              <div class="watchlist-item-date"><i class="fas fa-clock"></i> Added ${formatDate(item.addedAt)}</div>
+            </div>
+            <div class="watchlist-item-actions">
+              <a href="${item.url}" class="watchlist-action-btn btn-play" title="Play"><i class="fas fa-play"></i></a>
+              <button class="watchlist-action-btn btn-remove" onclick="removeFromWatchlist(${item.id})" title="Remove"><i class="fas fa-trash"></i></button>
+            </div>
+          </div>`).join('');
+        clearBtn.style.display = 'block';
+      }
+      stats.textContent = items.length + (items.length === 1 ? ' item' : ' items') + ' in watchlist';
+    }
+    function removeFromWatchlist(id) {
+      watchlistManager.remove(id); renderWatchlist();
+      if (!watchlistManager.isInWatchlist(window.location.href)) {
+        const b = document.getElementById('bookmarkBtn');
+        b.classList.remove('bookmarked'); b.title = 'Add to Watchlist';
+      }
+      showToast('Removed', 'Video removed from watchlist', 'error');
+    }
+    function clearWatchlist() {
+      if (confirm('Clear your entire watchlist?')) {
+        watchlistManager.clear(); renderWatchlist();
+        const b = document.getElementById('bookmarkBtn');
+        b.classList.remove('bookmarked'); b.title = 'Add to Watchlist';
+        showToast('Cleared', 'Watchlist has been cleared', 'error');
+      }
+    }
+    document.getElementById('watchlistModal').addEventListener('click', (e) => {
+      if (e.target.id === 'watchlistModal') closeWatchlist();
+    });
+
+    function initializeBookmark() {
+      const btn = document.getElementById('bookmarkBtn');
+      const currentUrl = window.location.href;
+      if (watchlistManager.isInWatchlist(currentUrl)) {
+        btn.classList.add('bookmarked'); btn.title = 'Already in Watchlist';
+      }
+      btn.addEventListener('click', () => {
+        if (!btn.classList.contains('bookmarked')) {
+          const added = watchlistManager.add({ name: "{{.FileName}}", url: currentUrl });
+          if (added) { btn.classList.add('bookmarked'); btn.title = 'Already in Watchlist'; showToast('Added!', 'Video saved to watchlist', 'success'); }
+          else { showToast('Already Saved', 'This video is already in your watchlist', 'warning'); }
+        }
+      });
+    }
+
+    // ---------- Share ----------
+    function setupShareLinks() {
+      const url = encodeURIComponent(window.location.href);
+      const title = encodeURIComponent("{{.FileName}}");
+      const map = {
+        'whatsapp-share': `https://wa.me/?text=${title}%20${url}`,
+        'telegram-share': `https://t.me/share/url?url=${url}&text=${title}`,
+        'facebook-share': `https://www.facebook.com/sharer/sharer.php?u=${url}`,
+        'twitter-share': `https://twitter.com/intent/tweet?url=${url}&text=${title}`,
+        'messenger-share': `fb-messenger://share/?link=${url}`,
+        'email-share': `mailto:?subject=${title}&body=Check this out: ${url}`
+      };
+      Object.keys(map).forEach(id => { const el = document.getElementById(id); if (el) el.href = map[id]; });
+    }
+    function copyLink() {
+      navigator.clipboard.writeText(window.location.href).then(() => {
+        showToast('Success!', 'Link copied to clipboard');
+      }).catch(() => {
+        const input = document.createElement('input');
+        input.value = window.location.href;
+        document.body.appendChild(input); input.select();
+        document.execCommand('copy'); document.body.removeChild(input);
+        showToast('Success!', 'Link copied to clipboard');
+      });
+    }
+    function shareToInstagram() { showToast('Info', 'Instagram works best via app — link copied!'); copyLink(); }
+    function shareVideo() {
+      if (navigator.share) {
+        navigator.share({ title: "{{.FileName}}", url: window.location.href }).catch(() => {});
+      } else { copyLink(); }
+    }
+
+    function showToast(title, message, type = 'success') {
+      const toast = document.getElementById('toast');
+      const icon = toast.querySelector('i');
+      toast.classList.remove('warning', 'error');
+      if (type === 'warning') { toast.classList.add('warning'); icon.className = 'fas fa-exclamation-circle'; }
+      else if (type === 'error') { toast.classList.add('error'); icon.className = 'fas fa-times-circle'; }
+      else { icon.className = 'fas fa-check-circle'; }
+      toast.querySelector('.toast-title').textContent = title;
+      toast.querySelector('.toast-message').textContent = message;
+      toast.classList.add('show');
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // ---------- Quality badge (guessed from filename) ----------
+    (function() {
+      const name = "{{.FileName}}";
+      const match = name.match(/(4320|2160|1440|1080|720|480|360)p/i);
+      const label = match ? match[0].toUpperCase() : 'HD';
+      document.getElementById('qualityBadge').innerHTML = '<i class="fas fa-film"></i> ' + label;
+      document.getElementById('statQuality').innerHTML = '<i class="fas fa-crown"></i><span>' + label + '</span>';
+    })();
+
+    // ---------- Projects menu (3-dot) ----------
+    const projectsBtn = document.getElementById('projectsBtn');
+    const projectsDropdown = document.getElementById('projectsDropdown');
+    projectsBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      projectsDropdown.classList.toggle('open');
+    });
+    document.addEventListener('click', (e) => {
+      if (!projectsDropdown.contains(e.target) && e.target !== projectsBtn) {
+        projectsDropdown.classList.remove('open');
+      }
+    });
+
+    // ---------- Theme switcher ----------
+    const themeBtns = document.querySelectorAll('.theme-btn');
+    themeBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        themeBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const theme = btn.dataset.theme;
+        document.body.classList.remove('trueDark', 'light');
+        if (theme !== 'default') document.body.classList.add(theme);
+        localStorage.setItem('raj-stream-theme', theme);
+      });
+    });
+    const savedTheme = localStorage.getItem('raj-stream-theme');
+    if (savedTheme) themeBtns.forEach(b => { if (b.dataset.theme === savedTheme) b.click(); });
+
+    // ---------- Keyboard shortcuts ----------
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === 'c') { e.preventDefault(); copyLink(); }
+        else if (e.key === 'b') { e.preventDefault(); document.getElementById('bookmarkBtn').click(); }
+        else if (e.key === 'w') { e.preventDefault(); openWatchlist(); }
+      }
+      if (e.key === 'Escape') {
+        if (document.getElementById('watchlistModal').classList.contains('active')) closeWatchlist();
+        projectsDropdown.classList.remove('open');
+      }
+    });
+
+    // ---------- Native player: loading spinner, speed & PiP toolbar ----------
+    const player = document.getElementById('player');
+    const loaderEl = document.getElementById('loader');
+
+    player.addEventListener('waiting', () => loaderEl.classList.remove('hidden'));
+    player.addEventListener('playing', () => loaderEl.classList.add('hidden'));
+    player.addEventListener('canplay', () => loaderEl.classList.add('hidden'));
+    player.addEventListener('error', () => {
+      loaderEl.classList.add('hidden');
+      showToast('Playback error', 'Try the Download button instead', 'error');
+    });
+
+    const metaInfo = document.getElementById('metaInfo');
+    const baseSize = "{{.FileSize}}";
+    player.addEventListener('loadedmetadata', () => {
+      if (isFinite(player.duration) && player.duration > 0) {
+        const m = Math.floor(player.duration / 60);
+        const s = Math.floor(player.duration % 60).toString().padStart(2, '0');
+        metaInfo.textContent = baseSize ? (baseSize + ' • ' + m + ':' + s) : (m + ':' + s);
+      }
+    });
+
+    const speeds = [1, 1.25, 1.5, 2, 0.5];
+    let speedIdx = 0;
+    document.getElementById('btnSpeed').addEventListener('click', (e) => {
+      speedIdx = (speedIdx + 1) % speeds.length;
+      player.playbackRate = speeds[speedIdx];
+      e.currentTarget.textContent = speeds[speedIdx] + 'x';
+    });
+
+    const pipBtn = document.getElementById('btnPiP');
+    if (!document.pictureInPictureEnabled) {
+      pipBtn.style.display = 'none';
+    } else {
+      pipBtn.addEventListener('click', async () => {
+        try {
+          if (document.pictureInPictureElement) await document.exitPictureInPicture();
+          else await player.requestPictureInPicture();
+        } catch (err) { showToast('Not supported', 'PiP is not available here', 'warning'); }
+      });
+    }
+
+    // ---------- VPN / secure note — cycles English → Hindi → Bengali ----------
+    const vpnTexts = {
+      en: "🔒 For smoother streaming, try connecting a VPN (like Proton VPN, Turbo VPN, etc.) to a nearby server such as Singapore — you'll usually get better speed. This link itself is fully secure (HTTPS encrypted).",
+      hi: "🔒 Behtar streaming ke liye aap VPN (jaise Proton VPN, Turbo VPN) use karke Singapore ya kisi paas ke server se connect kar sakte hain — isse aksar speed aur behtar milti hai. Yeh link khud poori tarah secure hai (HTTPS encrypted).",
+      bn: "🔒 আরও ভালো স্ট্রিমিংয়ের জন্য আপনি VPN (যেমন Proton VPN, Turbo VPN) ব্যবহার করে সিঙ্গাপুর বা কাছাকাছি কোনো সার্ভারে সংযোগ করতে পারেন — সাধারণত স্পিড আরও ভালো পাবেন। এই লিঙ্কটি নিজেই সম্পূর্ণ নিরাপদ (HTTPS এনক্রিপ্টেড)।"
+    };
+    const vpnOrder = ['en', 'hi', 'bn'];
+    let vpnIdx = 0;
+    document.getElementById('vpnTranslateBtn').addEventListener('click', () => {
+      vpnIdx = (vpnIdx + 1) % vpnOrder.length;
+      const lang = vpnOrder[vpnIdx];
+      document.getElementById('vpnNoteText').textContent = vpnTexts[lang];
+      document.getElementById('vpnLangLabel').textContent = lang.toUpperCase();
+    });
+
+    // ---------- Multi-audio-track detector (Hindi/English/Tamil dub switch) ----------
+    // Only supported on some desktop browsers (Chrome/Edge). Silently hides if unsupported
+    // or if the file only has a single audio track — no fake UI shown otherwise.
+    function setupAudioTracks() {
+      const videoEl = document.querySelector('.player');
+      const wrap = document.getElementById('audioTrackWrap');
+      const label = document.getElementById('audioTrackLabel');
+      const dropdown = document.getElementById('audioTrackDropdown');
+      if (!videoEl || !('audioTracks' in videoEl)) return;
+
+      const tracks = videoEl.audioTracks;
+      if (!tracks || tracks.length <= 1) return; // nothing to switch between
+
+      wrap.style.display = 'inline-flex';
+      dropdown.innerHTML = '';
+
+      const trackLabelFor = (t, i) => t.label || (t.language ? t.language.toUpperCase() : ('Track ' + (i + 1)));
+
+      for (let i = 0; i < tracks.length; i++) {
+        const t = tracks[i];
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'audio-track-item' + (t.enabled ? ' active' : '');
+        item.textContent = trackLabelFor(t, i);
+        item.addEventListener('click', () => {
+          // Enabling one track auto-disables the others — browser guarantees only
+          // one is ever audible at a time, so switching = instant mute + unmute.
+          for (let j = 0; j < tracks.length; j++) tracks[j].enabled = (j === i);
+          label.textContent = trackLabelFor(t, i);
+          dropdown.querySelectorAll('.audio-track-item').forEach(el => el.classList.remove('active'));
+          item.classList.add('active');
+          dropdown.classList.remove('open');
+        });
+        dropdown.appendChild(item);
+      }
+
+      let current;
+      for (let i = 0; i < tracks.length; i++) { if (tracks[i].enabled) { current = trackLabelFor(tracks[i], i); break; } }
+      label.textContent = current || trackLabelFor(tracks[0], 0);
+    }
+
+    document.getElementById('audioTrackBtn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      document.getElementById('audioTrackDropdown').classList.toggle('open');
+    });
+    document.addEventListener('click', (e) => {
+      const dd = document.getElementById('audioTrackDropdown');
+      if (dd && !dd.contains(e.target) && e.target.id !== 'audioTrackBtn') dd.classList.remove('open');
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      setupShareLinks();
+      initializeBookmark();
+      document.getElementById('loadingOverlay').classList.add('hidden');
+
+      player.addEventListener('loadedmetadata', setupAudioTracks);
+      if (player.readyState >= 1) setupAudioTracks();
+    });
+    window.addEventListener('load', () => document.getElementById('loadingOverlay').classList.add('hidden'));
+    setTimeout(() => document.getElementById('loadingOverlay').classList.add('hidden'), 2500);
+  </script>
+</body>
+</html>
