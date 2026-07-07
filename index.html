@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{.FileName}} — Watch</title>
+<style>
+  :root {
+    --bg: #0d0f14;
+    --panel: #161923;
+    --panel-2: #1d212e;
+    --accent: #7aa2f7;
+    --accent-2: #9d7cf7;
+    --text: #e6e6e6;
+    --muted: #7c8296;
+    --border: #262b3a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: radial-gradient(circle at top, #131624 0%, #0a0b10 100%);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 24px 16px 40px;
+  }
+  .wrap {
+    width: 100%;
+    max-width: 880px;
+  }
+  .brand-top {
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+  }
+  .brand-top span { color: var(--accent); }
+  .player-card {
+    background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 16px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+  }
+  video {
+    width: 100%;
+    max-height: 70vh;
+    border-radius: 12px;
+    background: #000;
+    display: block;
+  }
+  .filename {
+    margin: 18px 4px 4px;
+    font-size: 16px;
+    font-weight: 600;
+    word-break: break-word;
+    color: var(--text);
+  }
+  .sub {
+    margin: 2px 4px 18px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 0 4px;
+  }
+  .btn {
+    flex: 1 1 160px;
+    text-align: center;
+    text-decoration: none;
+    padding: 13px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    border: 1px solid var(--border);
+    transition: transform 0.15s ease, opacity 0.15s ease;
+    cursor: pointer;
+    user-select: none;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-playit {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+    color: #0a0b10;
+    border: none;
+  }
+  .btn-vlc {
+    background: transparent;
+    color: #ff8800;
+    border-color: #ff880055;
+  }
+  .btn-download {
+    background: transparent;
+    color: var(--text);
+    border-color: var(--border);
+  }
+  .btn:hover { opacity: 0.88; }
+  footer {
+    margin-top: 32px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    letter-spacing: 0.5px;
+  }
+  footer .glow {
+    color: var(--accent);
+    font-weight: 600;
+  }
+  @media (max-width: 480px) {
+    .actions { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand-top">⚡ <span>RAJ</span> File Stream</div>
+
+    <div class="player-card">
+      <video id="player" controls autoplay playsinline preload="metadata">
+        <source src="{{.StreamURL}}">
+        Your browser does not support the video tag.
+      </video>
+
+      <div class="filename">{{.FileName}}</div>
+      <div class="sub">Streaming directly — no download required</div>
+
+      <div class="actions">
+        <a class="btn btn-playit" href="{{.PlayItURL}}">▶️ Open in PlayIt</a>
+        <a class="btn btn-vlc" href="{{.VlcURL}}">🎬 Open in VLC</a>
+        <a class="btn btn-download" href="{{.DownloadURL}}">⬇️ Download</a>
+      </div>
+    </div>
+
+    <footer>
+      Powered by <span class="glow">AstraToonix Stream Engine</span>
+    </footer>
+  </div>
+</body>
+</html>
