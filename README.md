@@ -311,3 +311,143 @@ User 4 request → Bot 1 (round robin!)
 
 *Built with ❤️ by **Raj Dev J***
 *Powered by Go, Telegram MTProto, Neon PostgreSQL & Upstash Redis*
+
+
+
+
+
+# ⚡ RAJ File Stream Bot — Poori Feature List
+### Built by **Raj Dev J**
+
+Yeh document batata hai ki abhi ke `main.go` + `index.html` mein **kya-kya features hain** aur **konse commands** kaam karte hain — normal aur admin-only (hidden) dono.
+
+---
+
+## 🌐 Website Routes (URLs)
+
+| Route | Kya Karta Hai |
+|---|---|
+| `/` | Simple homepage — bot ka naam dikhata hai |
+| `/health` ya `/ping` | Health check (JSON status) |
+| `/stream/{id}` | Video/file ka **raw stream link** — seedha player ya app mein khulta hai, koi HTML wrapper nahi |
+| `/dl/{id}` | Force **Download** link |
+| `/watch/{id}` | **Watch Page** — poora advanced player wala HTML page |
+
+Teeno links (`stream`, `dl`, `watch`) **expiry check** karte hain — agar file expire ho chuki hai toh `⏳ This link has expired.` dikhata hai.
+
+---
+
+## 🎬 Watch Page (`/watch/{id}`) — Poori Feature List
+
+### Player
+- **Native HTML5 video player** (fullscreen mein koi black gap nahi — old reliable player)
+- **⏩ Skip 10s** button — ek tap mein 10 second aage
+- **Resume Playback** — localStorage mein last position save hoti hai, dobara khologe toh wahi se shuru
+- **💬 Subtitle Upload/Toggle** — apni `.srt`/`.vtt` file upload karke CC on/off kar sakte ho (client-side, koi server upload nahi hota)
+- **📸 Screenshot/Capture** — current frame ko PNG image ke roop mein download
+- **Double-Tap Seek (Mobile)** — video ke left/right side pe double-tap = -10s/+10s (YouTube jaisa), single tap = play/pause
+- **Speed control** — 1x → 1.25x → 1.5x → 2x → 0.5x cycle button
+- **Picture-in-Picture (PiP)** button
+- **Loading spinner** — buffering ke time dikhta hai
+- **Multi-Audio-Track Switcher** — agar file mein multiple dubbed audio tracks hain (Hindi/English/Tamil), toh dropdown se switch kar sakte ho (best-effort — sirf kuch desktop browsers support karte hain, mobile pe automatically chhup jaata hai)
+
+### Info & Actions
+- File name, file size, auto-detected quality badge (jaise 1080p — filename se guess hota hai)
+- **👁 View Counter** — DB mein permanent count, page pe "1.2K views" jaisa dikhta hai
+- **Bookmark/Watchlist** — localStorage-based, koi backend nahi chahiye
+- **Action buttons**: Watchlist, Copy Link, PlayIt (app), VLC (app), Download, Share
+- **Social Share Grid** — WhatsApp, Telegram, Facebook, Twitter, Instagram, Messenger, Email (sab auto-filled links ke saath)
+
+### Branding & Extras
+- Header mein aapka **logo image**, "RAJ Stream" naam, animated 🔴 LIVE badge, scrolling filename marquee
+- **3-dot (⋮) Projects Menu** — aapke 2 projects (RAJ AI + Explore & Follow/Instagram) ke links
+- Sidebar mein **RGB glowing "Raj Dev"** naam credit card
+- Footer mein Telegram username **@raj_dev_01** (clickable)
+- **VPN + Secure Note** — video ke neeche VPN suggestion (Proton/Turbo VPN, Singapore server) + "HTTPS secure" note, **🌐 Translate button** se English → Hindi → Bengali cycle
+- **Theme Switcher** — 🌈 Default / 🌙 True Dark / ☀️ Light
+- Toast notifications, keyboard shortcuts (`Ctrl+C` copy link, `Ctrl+B` bookmark, `Ctrl+W` open watchlist)
+
+---
+
+## 🤖 Telegram Bot Commands
+
+### 👤 Normal (Sabke liye — but poora bot hi private/admin-only hai)
+| Command | Kya Karta Hai |
+|---|---|
+| `/start` | Welcome message |
+| `/help` | Sab commands ki list + expiry ka short explanation |
+| *(File bhejna)* | Koi bhi file (video/audio/document/photo) bhejo → bot permanent stream/download/watch links deta hai, saath mein Telegram message mein "📺 Watch Online" button bhi milta hai |
+
+### 🔒 Hidden / Admin-Only Commands
+*(Sirf `ADMIN_ID` wala user use kar sakta hai — koi aur try kare toh silently ignore ya "Admin only" milta hai)*
+
+| Command | Usage | Kya Karta Hai |
+|---|---|---|
+| `/stats` | `/stats` | Total files, total users, aur active bots ki count dikhata hai |
+| `/ban` | `/ban <user_id>` | User ko bot use karne se ban karta hai |
+| `/unban` | `/unban <user_id>` | Ban hataata hai |
+| `/delete` | `/delete <file_id>` | File record delete karta hai (link kaam karna band ho jaata hai) |
+| `/expire` | `/expire <file_id> <duration>` | **Link Expiry System** — neeche detail mein |
+
+---
+
+## ⏳ Link Expiry System (`/expire`)
+
+**Default behavior: sab links PERMANENT (unlimited) hote hain** — jab tak aap khud expiry set na karo.
+
+```
+/expire abc123 30m     → 30 minute mein expire
+/expire abc123 12h     → 12 ghante mein expire
+/expire abc123 7d      → 7 din mein expire
+/expire abc123 1y      → 1 saal mein expire (koi bhi custom duration chal sakti hai)
+/expire abc123 off     → expiry hata do, link wapas permanent
+```
+
+- Expiry set karte hi cache turant clear hota hai (turant effect)
+- Expire ho jaane ke baad `/stream`, `/dl`, `/watch` teeno **"⏳ This link has expired."** dikhate hain
+- Har `/expire` set karne pe aapko confirmation message milta hai (exact expiry date/time ke saath)
+
+---
+
+## 👁 View Counter + Telegram Notifications
+
+- Har baar koi `/watch` page kholta hai, uska count **Neon PostgreSQL DB mein permanently** save hota hai (bot restart ho, count safe rehta hai)
+- Watch page pe dikh raha hai (stats row + sidebar dono jagah)
+- **Milestone Notification**: jaise hi koi file 10, 50, 100, 500, 1K, 5K, 10K, 50K, 100K... views cross karti hai, aapko (Admin) seedha Telegram message aata hai:
+  > 👀 *filename.mp4* hit **1.2K** views on the watch page!
+- Har view pe spam nahi hota — sirf milestones pe
+
+---
+
+## 🗄️ Database Schema (Neon PostgreSQL)
+
+**`files` table** columns:
+`id`, `message_id`, `channel_id`, `file_name`, `file_size`, `mime_type`, `hash`, `uploader_id`, `uploader_name`, `created_at`, **`expires_at`** *(nullable — NULL = permanent)*, **`view_count`** *(default 0)*
+
+**`users` table**: `id`, `username`, `first_name`, `is_banned`, `joined_at`
+
+---
+
+## 📁 Files — Kaun Kya Karta Hai
+
+```
+Raj/
+├── main.go       ← Poora bot ka code + HTTP server + DB + expiry + views
+├── index.html    ← Advanced Watch Page (Techify-style UI, sab features)
+├── go.mod        ← Dependencies
+├── Dockerfile    ← Deploy config (index.html bhi binary ke saath bundle hoti hai)
+```
+
+---
+
+## 🔧 Environment Variables (Poori List, unchanged)
+
+### ✅ Required
+`BOT_TOKENS` / `MULTI_TOKEN1-3`, `API_ID`, `API_HASH`, `ADMIN_ID`, `DB_URI`, `REDIS_URI`, `FQDN`, `DB_CHANNEL_ID`, `LOG_CHANNEL_ID`
+
+### ⚙️ Optional
+`MAIN_CHANNEL_ID` (Force Subscribe), `PORT` (default `8080`)
+
+---
+
+*Yeh document is baat ko cover karta hai ki poore conversation mein jo bhi features step-by-step add hue (Watch Page, RGB branding, Projects menu, Audio tracks, VPN note, Player upgrades, Expiry system, View counter) — sab abhi ke code mein zinda hain, kuch bhi miss nahi hua.*
