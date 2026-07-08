@@ -79,6 +79,8 @@ Result: ~10MB ka binary — bahut fast start hota hai!
 | `FQDN` | Aapki website ka URL | `raj.onrender.com` |
 | `DB_CHANNEL_ID` | Storage channel ID | `-1001234567890` |
 | `LOG_CHANNEL_ID` | Log channel ID | `-1009876543210` |
+| `PASSWORD_PROMPT_VIDEO_URL` | your thumbnail video | `https://your video mp4` |
+
 
 ### ⚙️ OPTIONAL (Default values hain)
 
